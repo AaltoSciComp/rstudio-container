@@ -1,0 +1,37 @@
+FROM debian:stretch-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG r_mirror="https://mirrors.nics.utk.edu/cran/"
+
+RUN apt-get update && \
+    apt-get install -y gnupg libssl-dev libcurl4-openssl-dev apt-transport-https ca-certificates
+RUN echo deb ${r_mirror}/bin/linux/debian stretch-cran34/ > /etc/apt/sources.list.d/r-backports.list
+RUN mkdir ~/.gnupg && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key 'E19F5F87128899B192B1A2C2AD5F960A256A04AF'
+RUN apt-get update 
+RUN apt-get -t stretch-cran34 install -y \
+        r-base-core \
+        r-base-dev \
+        r-recommended \
+        littler \
+        python-rpy2
+
+
+
+RUN apt-get install -y xorg wget && \
+#    wget https://download1.rstudio.org/desktop/xenial/amd64/rstudio-1.2.5033-amd64.deb && \
+#    dpkg -i --force-depends rstudio-1.2.5033-amd64.deb && \
+    wget https://download1.rstudio.org/rstudio-xenial-1.1.423-amd64.deb && \
+    dpkg -i --force-depends rstudio-xenial-1.1.423-amd64.deb && \
+    apt-get -f install -y && \
+    apt-get -y install -y libxslt1.1
+
+
+RUN apt-get clean && \
+    rm -f rstudio-*.deb
+
+ADD installcmds.R installcmds.R
+
+RUN ["R", "-f", "installcmds.R"]   
+
+ENV LC_ALL=C.UTF-8
