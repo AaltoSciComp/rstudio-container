@@ -1,16 +1,10 @@
 FROM ubuntu:bionic
 
-LABEL maintainer="sol-eng@rstudio.com"
-
 # Set versions and platforms
-ARG RSP_PLATFORM=trusty
-ARG RSP_VERSION=1.2.5033-1
 ARG R_VERSION=3.6.2
-ARG MINICONDA_VERSION=4.5.4
-ARG PYTHON_VERSION=3.6.5
 ARG DRIVERS_VERSION=1.6.0
 
-# Install RStudio Server Pro session components -------------------------------#
+# Install RStudio Server Pro session components
 
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -23,16 +17,7 @@ RUN apt-get update -y && \
     libuser1-dev \
     rrdtool
 
-#RUN curl -O https://s3.amazonaws.com/rstudio-ide-build/session/${RSP_PLATFORM}/rsp-session-${RSP_PLATFORM}-${RSP_VERSION}.tar.gz && \
-#    mkdir -p /usr/lib/rstudio-server && \
-#    tar -zxvf ./rsp-session-${RSP_PLATFORM}-${RSP_VERSION}.tar.gz -C /usr/lib/rstudio-server/ && \
-#    mv /usr/lib/rstudio-server/rsp-session*/* /usr/lib/rstudio-server/ && \
-#    rm -rf /usr/lib/rstudio-server/rsp-session* && \
-#    rm -f ./rsp-session-${RSP_PLATFORM}-${RSP_VERSION}.tar.gz
-
-#EXPOSE 8788/tcp
-
-# Install additional system packages ------------------------------------------#
+# Install additional system packages
 
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -42,7 +27,7 @@ RUN apt-get update -y && \
     libxml2-dev \
     subversion
 
-# Install R -------------------------------------------------------------------#
+# Install R
 
 RUN curl -O https://cdn.rstudio.com/r/ubuntu-1804/pkgs/r-${R_VERSION}_1_amd64.deb && \
     DEBIAN_FRONTEND=noninteractive gdebi --non-interactive r-${R_VERSION}_1_amd64.deb && \
@@ -51,14 +36,15 @@ RUN curl -O https://cdn.rstudio.com/r/ubuntu-1804/pkgs/r-${R_VERSION}_1_amd64.de
 RUN ln -s /opt/R/${R_VERSION}/bin/R /usr/local/bin/R && \
     ln -s /opt/R/${R_VERSION}/bin/Rscript /usr/local/bin/Rscript
 
-# Install R packages ----------------------------------------------------------#
+# Install R packages
 
 RUN /opt/R/${R_VERSION}/bin/R -e 'install.packages("devtools", repos="https://demo.rstudiopm.com/cran/__linux__/bionic/latest")' && \
     /opt/R/${R_VERSION}/bin/R -e 'install.packages("tidyverse", repos="https://demo.rstudiopm.com/cran/__linux__/bionic/latest")' && \
     /opt/R/${R_VERSION}/bin/R -e 'install.packages("shiny", repos="https://demo.rstudiopm.com/cran/__linux__/bionic/latest")' && \
     /opt/R/${R_VERSION}/bin/R -e 'install.packages("rmarkdown", repos="https://demo.rstudiopm.com/cran/__linux__/bionic/latest")'
 
-# Install Rstudio Desktop (ADDED)
+# Install Rstudio Desktop and required libraries
+
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y xorg && \
     curl -O https://download1.rstudio.org/desktop/bionic/amd64/rstudio-1.2.5033-amd64.deb && \
     DEBIAN_FRONTEND=noninteractive dpkg -i --force-depends rstudio-1.2.5033-amd64.deb && \
@@ -68,7 +54,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y xorg && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y unity-gtk3-module && \
     rm -f *.deb
 
-# Install RStudio Professional Drivers ----------------------------------------#
+# Install RStudio Professional Drivers
 
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y unixodbc unixodbc-dev gdebi
@@ -79,7 +65,7 @@ RUN curl -O https://drivers.rstudio.org/7C152C12/installer/rstudio-drivers_${DRI
 
 RUN /opt/R/${R_VERSION}/bin/R -e 'install.packages("odbc", repos="https://demo.rstudiopm.com/cran/__linux__/bionic/latest")'
 
-# Locale configuration --------------------------------------------------------#
+# Locale configuration
 
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y locales
@@ -88,8 +74,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-# Clean to reduce image size
-RUN apt-get clean && \
-    rm -f /r*.deb
+# Command to run
 
 CMD XDG_RUNTIME_DIR="" rstudio
